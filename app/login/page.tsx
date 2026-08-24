@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { LogoWordmark } from '@/components/SpiralLogo';
+import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -20,11 +21,17 @@ export default function LoginPage() {
 
   function signInWithMailru() {
     setLoading('mailru');
+    // Кастомный OAuth-флоу Mail.ru ID (не входит "из коробки" в Supabase Auth).
+    // См. app/api/auth/mailru/callback/route.ts и README.md для деталей.
+    // Mail.ru требует обязательный параметр state (защита от CSRF) — генерируем
+    // случайное значение и сохраняем его для последующей проверки в callback.
+    const state = crypto.randomUUID();
+    sessionStorage.setItem('spirai_mailru_state', state);
     const clientId = process.env.NEXT_PUBLIC_MAILRU_CLIENT_ID;
     const redirectUri = `${window.location.origin}/api/auth/mailru/callback`;
     const url = `https://oauth.mail.ru/login?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(
       redirectUri
-    )}&scope=userinfo`;
+    )}&scope=userinfo&state=${state}`;
     window.location.href = url;
   }
 
